@@ -14,7 +14,7 @@ namespace QuizApp_API.Controllers
     public class ParticipantController : ControllerBase
     {
 
-        private QuizDBContext _quizDBContext;
+        readonly private QuizDBContext _quizDBContext;
 
         public ParticipantController(QuizDBContext quizDBContext)
         {

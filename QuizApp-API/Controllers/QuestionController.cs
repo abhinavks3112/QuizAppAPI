@@ -15,7 +15,7 @@ namespace QuizApp_API.Controllers
     [ApiController]
     public class QuestionController : ControllerBase
     {
-        private QuizDBContext _quizDBContext;
+        readonly private QuizDBContext _quizDBContext;
         public QuestionController(QuizDBContext quizDBContext)
         {
             _quizDBContext = quizDBContext;
@@ -25,8 +25,10 @@ namespace QuizApp_API.Controllers
         [Route("GetAll")]
         public ActionResult GetAllQuestions()
         {
-            JsonSerializerSettings jsSettings = new JsonSerializerSettings();
-            jsSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+            JsonSerializerSettings jsSettings = new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            };
             var converted = JsonConvert.SerializeObject(_quizDBContext.Question.ToList(), jsSettings);
             return Content(converted, "application/json");
         }
@@ -47,7 +49,7 @@ namespace QuizApp_API.Controllers
                 _quizDBContext.Add(model);
                 _quizDBContext.SaveChanges();
             }
-            catch(Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -63,27 +65,39 @@ namespace QuizApp_API.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (QnID != model.QnID)
-            {
-                return BadRequest();
-            }
+            var existingQuestion = _quizDBContext.Question.Where(q => q.QnID == QnID).FirstOrDefault();
 
-            _quizDBContext.Entry(model).State = EntityState.Modified;
-
-            try
+            if(existingQuestion != null)
             {
-                _quizDBContext.SaveChanges();
+                existingQuestion.CategoryId = model.CategoryId;
+                existingQuestion.Qn = model.Qn;
+                existingQuestion.ImageName = model.ImageName;
+                existingQuestion.Option1 = model.Option1;
+                existingQuestion.Option2 = model.Option2;
+                existingQuestion.Option3 = model.Option3;
+                existingQuestion.Option4 = model.Option4;
+                existingQuestion.Answer = model.Answer;
+                existingQuestion.Comment = model.Comment;
+                
+                try
+                {
+                    _quizDBContext.SaveChanges();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!QuestionExists(QnID))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        NotFound();
+                    }
+                }
             }
-            catch (DbUpdateConcurrencyException)
+            else
             {
-                if (!QuestionExists(QnID))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                NotFound();
             }
 
             return Ok();
@@ -92,6 +106,26 @@ namespace QuizApp_API.Controllers
         private bool QuestionExists(int id)
         {
             return _quizDBContext.Question.Count(e => e.QnID == id) > 0;
+        }
+
+        [HttpPost]
+        [Route("Delete")]
+        public Boolean Delete([FromBody]int QnID)
+        {
+            try
+            {
+                Question model = _quizDBContext.Question.Where(q => q.QnID == QnID).FirstOrDefault();
+                if (model != null)
+                {
+                    _quizDBContext.Remove(model);
+                    _quizDBContext.SaveChanges();
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            return true;
         }
     }
 }

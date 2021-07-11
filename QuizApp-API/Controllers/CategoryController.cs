@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using QuizApp_API.Models;
 
@@ -45,6 +46,65 @@ namespace QuizApp_API.Controllers
             jsSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             var converted = JsonConvert.SerializeObject(lstCategories, jsSettings);
             return Content(converted, "application/json");
+        }
+
+        [HttpGet]
+        [Route("Get")]
+        public ActionResult GetCategory(int CategoryId)
+        {
+            return Ok(_quizDBContext.QuestionCategory.Where(x => x.CategoryId == CategoryId).FirstOrDefault());
+        }
+
+        [HttpPost]
+        [Route("Insert")]
+        public Boolean Insert(QuestionCategory model)
+        {
+            try
+            {
+                // Get the maximum id from database
+                var max = _quizDBContext.QuestionCategory.DefaultIfEmpty().Max(r => r == null ? 0 : r.CategoryId);
+                model.CategoryId = max + 1;
+                _quizDBContext.Add(model);
+                _quizDBContext.SaveChanges();
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        [HttpPut]
+        [Route("Edit/{CategoryId}")]
+        public ActionResult EditCategory(int CategoryId, QuestionCategory model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var existingCategory = _quizDBContext.QuestionCategory.Where(q => q.CategoryId == CategoryId).FirstOrDefault();
+
+            if (existingCategory != null)
+            {
+                existingCategory.Name = model.Name;
+                existingCategory.Description = model.Description;
+
+                try
+                {
+                    _quizDBContext.SaveChanges();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return NotFound();
+                }
+            }
+            else
+            {
+                NotFound();
+            }
+
+            return Ok();
         }
 
         [HttpPost]

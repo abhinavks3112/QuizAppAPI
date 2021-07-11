@@ -46,6 +46,9 @@ namespace QuizApp_API.Controllers
         {
             try
             {
+                // Get the maximum id from database
+                var max = _quizDBContext.Question.DefaultIfEmpty().Max(r => r == null ? 0 : r.QnID);
+                model.QnID = max + 1;
                 _quizDBContext.Add(model);
                 _quizDBContext.SaveChanges();
             }
@@ -85,14 +88,7 @@ namespace QuizApp_API.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!QuestionExists(QnID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        NotFound();
-                    }
+                        return NotFound(); 
                 }
             }
             else
@@ -101,11 +97,6 @@ namespace QuizApp_API.Controllers
             }
 
             return Ok();
-        }
-
-        private bool QuestionExists(int id)
-        {
-            return _quizDBContext.Question.Count(e => e.QnID == id) > 0;
         }
 
         [HttpPost]

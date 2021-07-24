@@ -5,7 +5,7 @@ namespace QuizApp_API.Models
 {
     public partial class Question
     {
-        public int QnID { get; internal set; }
+        public int QnID { get; set; }
         public int CategoryId { get; set; }
         public string Qn { get; set; }
         public string ImageName { get; set; }

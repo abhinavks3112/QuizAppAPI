@@ -1,10 +1,11 @@
 ﻿using System;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace QuizApp_API.Models
 {
-    public partial class QuizDBContext : DbContext
+    public partial class QuizDBContext : IdentityDbContext
     {
         public QuizDBContext()
         {
@@ -18,6 +19,8 @@ namespace QuizApp_API.Models
         public virtual DbSet<Participant> Participant { get; set; }
         public virtual DbSet<Question> Question { get; set; }
         public virtual DbSet<QuestionCategory> QuestionCategory { get; set; }
+
+        public virtual DbSet<ApplicationUser> ApplicationUser { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -99,6 +102,7 @@ namespace QuizApp_API.Models
             });
 
             OnModelCreatingPartial(modelBuilder);
+            base.OnModelCreating(modelBuilder);
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
